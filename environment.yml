@@ -1,0 +1,11 @@
+name: reasonflow
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - cudatoolkit=11.8
+  - faiss-gpu
+  - pip:
+    - -r requirements.txt 

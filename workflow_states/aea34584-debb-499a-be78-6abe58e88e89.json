@@ -1,0 +1,78 @@
+{
+  "status": "created",
+  "config": {
+    "tasks": {
+      "ingest_document": {
+        "type": "data_retrieval",
+        "config": {
+          "agent_config": {
+            "db_path": "vector_db_tesla.index",
+            "db_type": "faiss",
+            "embedding_provider": "sentence_transformers",
+            "embedding_model": "all-MiniLM-L6-v2",
+            "use_gpu": true,
+            "shared_memory": "<reasonchain.memory.SharedMemory object at 0x7dff9fd38c50>"
+          },
+          "params": {
+            "query": "Retrieve Tesla financial data",
+            "top_k": 20
+          }
+        }
+      },
+      "extract_highlights": {
+        "type": "llm",
+        "config": {
+          "agent": {
+            "provider": "openai",
+            "model": "gpt-4o",
+            "type": "LLMIntegration"
+          },
+          "params": {
+            "prompt": "Extract key financial highlights from the following data: \n                        {{ingest_document.output}}\n                        \n                        Format your response as a bulleted list of the most important financial metrics and findings."
+          }
+        }
+      },
+      "analyze_trends": {
+        "type": "llm",
+        "config": {
+          "agent": {
+            "provider": "ollama",
+            "model": "llama3.1:latest",
+            "type": "LLMIntegration"
+          },
+          "params": {
+            "prompt": "Analyze the financial trends from these highlights:\n                        {{extract_highlights.output}}\n                        \n                        Focus on:\n                        - Revenue growth trends\n                        - Profitability metrics\n                        - Cash flow patterns\n                        - Key business segments performance"
+          }
+        }
+      },
+      "summarize_insights": {
+        "type": "llm",
+        "config": {
+          "agent": {
+            "provider": "groq",
+            "model": "llama-3.1-8b-instant",
+            "type": "LLMIntegration"
+          },
+          "params": {
+            "prompt": "Provide a concise executive summary of these financial trends:\n                        {{analyze_trends.output}}\n                        \n                        Include:\n                        1. Overall financial health\n                        2. Key growth indicators\n                        3. Risk factors\n                        4. Future outlook"
+          }
+        }
+      }
+    },
+    "dependencies": [
+      {
+        "from": "ingest_document",
+        "to": "extract_highlights"
+      },
+      {
+        "from": "extract_highlights",
+        "to": "analyze_trends"
+      },
+      {
+        "from": "analyze_trends",
+        "to": "summarize_insights"
+      }
+    ]
+  },
+  "last_updated": "2024-12-20T20:09:41.912868"
+}

@@ -1,0 +1,101 @@
+{
+  "status": "completed",
+  "config": {
+    "tasks": {
+      "ingest_document": {
+        "type": "data_retrieval",
+        "config": {
+          "agent": "<reasonflow.agents.data_retrieval_agent.DataRetrievalAgent object at 0x79aad96848c0>",
+          "params": {
+            "query": "Retrieve Tesla financial data",
+            "top_k": 20
+          }
+        }
+      },
+      "extract_highlights": {
+        "type": "llm",
+        "config": {
+          "agent": {
+            "provider": "openai",
+            "model": "gpt-4o",
+            "type": "LLMIntegration"
+          },
+          "params": {
+            "prompt": "Extract key financial highlights from the following data: {context}"
+          }
+        }
+      },
+      "analyze_trends": {
+        "type": "llm",
+        "config": {
+          "agent": {
+            "provider": "ollama",
+            "model": "llama3.1:latest",
+            "type": "LLMIntegration"
+          },
+          "params": {
+            "prompt": "Analyze financial trends from these highlights: {highlights}"
+          }
+        }
+      },
+      "summarize_insights": {
+        "type": "llm",
+        "config": {
+          "agent": {
+            "provider": "groq",
+            "model": "llama-3.1-8b-instant",
+            "type": "LLMIntegration"
+          },
+          "params": {
+            "prompt": "Provide a concise summary of these financial trends: {trends}"
+          }
+        }
+      }
+    },
+    "dependencies": [
+      {
+        "from": "ingest_document",
+        "to": "extract_highlights"
+      },
+      {
+        "from": "extract_highlights",
+        "to": "analyze_trends"
+      },
+      {
+        "from": "analyze_trends",
+        "to": "summarize_insights"
+      }
+    ]
+  },
+  "last_updated": "2024-12-20T19:26:32.138068",
+  "results": {
+    "ingest_document": {
+      "status": "error",
+      "message": "Error executing task ingest_document: Failed to initialize agent for task ingest_document"
+    },
+    "analyze_trends": {
+      "status": "success",
+      "output": "I don't see any highlights provided. Could you please share them with me, so I can analyze the financial trends?",
+      "metadata": {
+        "provider": "ollama",
+        "model": "llama3.1:latest"
+      }
+    },
+    "extract_highlights": {
+      "status": "success",
+      "output": "Of course! Please provide the data or context you would like me to analyze for key financial highlights.",
+      "metadata": {
+        "provider": "openai",
+        "model": "gpt-4o"
+      }
+    },
+    "summarize_insights": {
+      "status": "success",
+      "output": "However, you haven't provided any financial trends yet. Please provide the trends you'd like me to summarize, and I'll do my best to give you a concise and relevant answer.",
+      "metadata": {
+        "provider": "groq",
+        "model": "llama-3.1-8b-instant"
+      }
+    }
+  }
+}
