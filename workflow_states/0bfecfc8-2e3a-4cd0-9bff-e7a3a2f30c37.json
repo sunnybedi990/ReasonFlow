@@ -1,0 +1,70 @@
+{
+  "status": "completed",
+  "config": {
+    "tasks": {
+      "ingest-document": {
+        "type": "data_retrieval",
+        "config": {
+          "agent_config": {
+            "db_path": "vector_db_tesla.index",
+            "db_type": "faiss",
+            "embedding_provider": "sentence_transformers",
+            "embedding_model": "all-MiniLM-L6-v2",
+            "use_gpu": 1,
+            "shared_memory": "<reasonchain.memory.SharedMemory object at 0x76f8319d5cd0>"
+          },
+          "params": {
+            "query": "Retrieve Tesla financial data",
+            "top_k": 20
+          }
+        }
+      },
+      "extract-highlights": {
+        "type": "llm",
+        "config": {
+          "agent": "<reasonflow.integrations.llm_integrations.LLMIntegration object at 0x76f6bd897230>",
+          "params": {
+            "prompt": "Extract key financial highlights from the following data: \n                        {{ingest-document.output}}\n                        \n                        Format your response as a bulleted list of the most important financial metrics and findings."
+          }
+        }
+      },
+      "analyze-trends": {
+        "type": "llm",
+        "config": {
+          "agent": "<reasonflow.integrations.llm_integrations.LLMIntegration object at 0x76f68fee3410>",
+          "params": {
+            "prompt": "Analyze the financial trends from these highlights:\n                        {{extract-highlights.output}}\n                        \n                        Focus on:\n                        - Revenue growth trends\n                        - Profitability metrics\n                        - Cash flow patterns\n                        - Key business segments performance"
+          }
+        }
+      },
+      "summarize-insights": {
+        "type": "llm",
+        "config": {
+          "agent": "<reasonflow.integrations.llm_integrations.LLMIntegration object at 0x76f68fe7bce0>",
+          "params": {
+            "prompt": "Provide a concise executive summary of these financial trends:\n                        {{analyze-trends.output}}\n                        \n                        Include:\n                        1. Overall financial health\n                        2. Key growth indicators\n                        3. Risk factors\n                        4. Future outlook"
+          }
+        }
+      }
+    },
+    "dependencies": [
+      {
+        "from": "ingest-document",
+        "to": "extract-highlights"
+      },
+      {
+        "from": "extract-highlights",
+        "to": "analyze-trends"
+      },
+      {
+        "from": "analyze-trends",
+        "to": "summarize-insights"
+      }
+    ]
+  },
+  "last_updated": "2024-12-25T02:55:41.771762",
+  "results": {
+    "status": "error",
+    "message": "'WorkflowEngine' object has no attribute 'workflow_config'"
+  }
+}

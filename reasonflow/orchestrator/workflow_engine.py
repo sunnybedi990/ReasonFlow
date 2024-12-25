@@ -5,15 +5,25 @@ from reasonchain.memory import SharedMemory
 from reasonflow.agents.custom_agent_builder import CustomAgentBuilder
 from reasonflow.tasks.task_manager import TaskManager
 import re
+from reasonflow.observability.tracker_factory import TrackerFactory
 
 class WorkflowEngine:
-    def __init__(self, task_manager: Optional[TaskManager] = None):
+    def __init__(self, task_manager=None, tracker_type="basic", tracker_config=None):
+        """Initialize WorkflowEngine with task management and tracking"""
+        self.shared_memory = SharedMemory()
+        self.task_manager = task_manager or TaskManager(shared_memory=self.shared_memory)
+        self.tracker = TrackerFactory.create_tracker(tracker_type, tracker_config)
         self.workflow_graph = nx.DiGraph()
         self.current_state = {}
-        self.shared_memory = SharedMemory()
+        self.workflow_id = None
+        self.workflow_config = {}
         self.agent_builder = CustomAgentBuilder()
-        self.task_manager = task_manager or TaskManager(shared_memory=self.shared_memory)
         self.task_results = {}
+
+    def set_workflow_context(self, workflow_id: str, config: Dict):
+        """Set workflow context before execution"""
+        self.workflow_id = workflow_id
+        self.workflow_config = config
 
     def add_task(self, task_id: str, agent_type: str, config: Dict) -> None:
         try:
@@ -95,19 +105,37 @@ class WorkflowEngine:
 
 
     def execute_workflow(self) -> Dict:
-        execution_order = list(nx.topological_sort(self.workflow_graph))
-        print(f"Execution order: {execution_order}")  # Debugging the task order
+        try:
+            self.tracker.track_workflow(
+                workflow_id=self.workflow_id,
+                event_type="started",
+                data={"config": self.workflow_config}
+            )
+            execution_order = list(nx.topological_sort(self.workflow_graph))
+            print(f"Execution order: {execution_order}")  # Debugging the task order
 
-        results = {}
+            results = {}
 
-        for task_id in execution_order:
-            node_data = self.workflow_graph.nodes[task_id]
-            agent_type = node_data['agent_type']
-            config = node_data['config']
-            result = self._execute_task(task_id, agent_type, config)
-            results[task_id] = result
-            if isinstance(self.shared_memory, SharedMemory):
-                self.shared_memory.add_entry(task_id, result)
+            for task_id in execution_order:
+                node_data = self.workflow_graph.nodes[task_id]
+                agent_type = node_data['agent_type']
+                config = node_data['config']
+                result = self._execute_task(task_id, agent_type, config)
+                results[task_id] = result
+                if isinstance(self.shared_memory, SharedMemory):
+                    self.shared_memory.add_entry(task_id, result)
 
-        return results
+            self.tracker.track_workflow(
+                workflow_id=self.workflow_id,
+                event_type="completed",
+                data={"results": results}
+            )
+            return results
+        except Exception as e:
+            self.tracker.track_workflow(
+                workflow_id=self.workflow_id,
+                event_type="failed",
+                data={"error": str(e)}
+            )
+            return {"status": "error", "message": str(e)}
 

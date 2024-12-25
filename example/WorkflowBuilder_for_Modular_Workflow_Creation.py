@@ -2,7 +2,7 @@ from reasonflow.orchestrator.workflow_builder import WorkflowBuilder
 from reasonflow.tasks.task_manager import TaskManager
 from reasonflow.integrations.rag_integrations import RAGIntegration
 from reasonflow.integrations.llm_integrations import LLMIntegration
-from reasonflow.memory import SharedMemory
+from reasonchain.memory import SharedMemory
 import os
 
 # Initialize ReasonFlow components

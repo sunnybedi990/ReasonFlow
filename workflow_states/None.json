@@ -1,0 +1,8 @@
+{
+  "status": "failed",
+  "data": {
+    "error": "'WorkflowEngine' object has no attribute 'workflow_config'"
+  },
+  "timestamp": "2024-12-25T02:55:41.771693",
+  "last_updated": "2024-12-25T02:55:41.771700"
+}

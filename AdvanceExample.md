@@ -2,6 +2,97 @@
 
 This example demonstrates a multi-step workflow that analyzes financial documents using RAG and multiple LLM providers.
 
+# ReasonFlow Tracking System
+
+## Overview
+ReasonFlow provides two tracking options:
+1. Basic Tracking (Default)
+2. Advanced Tracking (via ReasonTrack)
+
+## Basic Tracking
+Built-in tracking system for essential monitoring:
+
+```python
+from reasonflow import WorkflowEngine
+
+# Default basic tracking
+engine = WorkflowEngine()
+```
+
+Features:
+- Task status tracking
+- Workflow state persistence
+- Basic error logging
+- JSON-based storage
+
+## Advanced Tracking (ReasonTrack)
+Enterprise-grade tracking with comprehensive monitoring:
+
+```python
+from reasonflow import WorkflowEngine
+
+config = {
+    "event_backend": {
+        "type": "kafka",
+        "config": {
+            "broker_url": "localhost:9092",
+            "topic_prefix": "reasonflow_"
+        }
+    },
+    "metrics_backend": {
+        "type": "prometheus",
+        "config": {
+            "pushgateway_url": "localhost:9091",
+            "job_name": "reasonflow"
+        }
+    },
+    "alert_config": {
+        "storage_path": "alerts",
+        "retention_days": 30,
+        "backends": {
+            "slack": {"webhook_url": "your_webhook_url"},
+            "email": {
+                "smtp_host": "smtp.gmail.com",
+                "smtp_port": 587,
+                "username": "alerts@example.com",
+                "password": "your_password"
+            }
+        }
+    },
+    "state_config": {
+        "storage_path": "workflow_states"
+    }
+}
+
+# Advanced tracking with ReasonTrack
+engine = WorkflowEngine(tracker_type="reasontrack", tracker_config=config)
+```
+
+Features:
+- Real-time event streaming
+- Comprehensive metrics collection
+- Distributed tracing
+- Alert management
+- Multiple backend support
+- State versioning
+
+## Comparison
+
+| Feature              | Basic Tracking | Advanced Tracking |
+|---------------------|----------------|------------------|
+| Task Status         | ✅             | ✅               |
+| Workflow State      | ✅             | ✅               |
+| Error Logging       | ✅             | ✅               |
+| Real-time Events    | ❌             | ✅               |
+| Metrics Collection  | ❌             | ✅               |
+| Alert Management    | ❌             | ✅               |
+| Multiple Backends   | ❌             | ✅               |
+| State Versioning    | ❌             | ✅               |
+| Setup Complexity    | Simple         | Advanced         |
+
+## Configuration Guide
+[Detailed configuration options and examples...]
+
 ```python
 from reasonflow.orchestrator.workflow_builder import WorkflowBuilder
 from reasonflow.integrations.llm_integrations import LLMIntegration

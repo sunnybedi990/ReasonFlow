@@ -9,13 +9,16 @@ import os
 import numpy as np
 
 class WorkflowBuilder:
-    def __init__(self, task_manager: Optional[TaskManager] = None):
-        self.engine = WorkflowEngine(task_manager=task_manager)
+    def __init__(self, task_manager=None, tracker_type="basic", tracker_config=None):
+        """Initialize WorkflowBuilder with optional task manager and tracking"""
+        self.task_manager = task_manager or TaskManager(shared_memory=SharedMemory())
+        self.engine = WorkflowEngine(
+            task_manager=self.task_manager,
+            tracker_type=tracker_type,
+            tracker_config=tracker_config
+        )
         self.state_manager = StateManager()
         self.parser = InputParser()
-        self.task_manager = task_manager or TaskManager()
-        self.shared_memory = SharedMemory()
-
 
     def create_workflow(self, config: Dict[str, Any]) -> str:
         """Create a new workflow from configuration."""
@@ -25,6 +28,9 @@ class WorkflowBuilder:
 
             if not self.parser.validate_workflow(serializable_config):
                 raise ValueError("Invalid workflow configuration")
+
+            # Set workflow context in engine
+            self.engine.set_workflow_context(workflow_id, serializable_config)
 
             # Add tasks to the workflow engine
             for task_id, task_config in serializable_config["tasks"].items():
@@ -47,7 +53,6 @@ class WorkflowBuilder:
         except Exception as e:
             print(f"Error creating workflow: {e}")
             return ""
-
 
     def _make_config_serializable(self, config: Dict) -> Dict:
         """
@@ -96,92 +101,6 @@ class WorkflowBuilder:
             # Handle serialization errors gracefully
             return f"// Serialization Error: {str(e)}"
 
-    # def execute_workflow(self, workflow_id: str) -> Dict:
-    #     """Execute a workflow by ID."""
-    #     try:
-    #         # Load workflow state
-    #         state = self.state_manager.load_state(workflow_id)
-    #         if not state:
-    #             raise ValueError(f"Workflow {workflow_id} not found")
-
-    #         # Update status to running
-    #         state["status"] = "running"
-    #         self.state_manager.save_state(workflow_id, state)
-
-    #         # Execute workflow tasks in the order of dependencies
-    #         results = {}
-    #         while not self.task_manager.is_empty():
-    #             task = self.task_manager.get_next_task()
-    #             if task and task["status"] == "pending":
-    #                 task_id = task["id"]
-    #                 node_data = self.engine.workflow_graph.nodes[task_id]
-    #                 agent_type = node_data["agent_type"]
-    #                 config = node_data["config"]
-
-    #                 result = self.engine._execute_task(task_id, agent_type, config)
-    #                 results[task_id] = result
-
-    #                 # Update task status in TaskManager
-    #                 if result.get("status") == "success":
-    #                     self.task_manager.update_task_status(task_id, "completed")
-    #                 else:
-    #                     self.task_manager.update_task_status(task_id, "failed")
-
-    #         # Update final state
-    #         state["status"] = "completed"
-    #         state["results"] = results
-    #         self.state_manager.save_state(workflow_id, state)
-
-    #         return results
-
-    #     except Exception as e:
-    #         error_state = {"status": "failed", "error": str(e)}
-    #         self.state_manager.save_state(workflow_id, error_state)
-    #         self.shared_memory.add_entry("workflow_execution_error", str(e))
-    #         return {"error": str(e)}
-
-    # def execute_workflow(self, workflow_id: str) -> Dict:
-    #     """Execute a workflow by ID with progress tracking."""
-    #     try:
-    #         state = self.state_manager.load_state(workflow_id)
-    #         if not state:
-    #             raise ValueError(f"Workflow {workflow_id} not found")
-
-    #         state["status"] = "running"
-    #         self.state_manager.save_state(workflow_id, state)
-
-    #         results = {}
-    #         total_tasks = len(self.engine.workflow_graph.nodes)
-    #         completed_tasks = 0
-
-    #         while not self.task_manager.is_empty():
-    #             task = self.task_manager.get_next_task()
-    #             if task and task["status"] == "pending":
-    #                 task_id = task["id"]
-    #                 result = self.execute_with_retries(
-    #                     task_id, 
-    #                     self.engine.workflow_graph.nodes[task_id]["agent_type"], 
-    #                     self.engine.workflow_graph.nodes[task_id]["config"]
-    #                 )
-    #                 results[task_id] = result
-    #                 completed_tasks += 1
-    #                 progress = (completed_tasks / total_tasks) * 100
-    #                 print(f"Progress: {progress:.2f}%")
-
-    #                 if result.get("status") == "success":
-    #                     self.task_manager.update_task_status(task_id, "completed")
-    #                 else:
-    #                     self.task_manager.update_task_status(task_id, "failed")
-
-    #         state["status"] = "completed"
-    #         state["results"] = results
-    #         self.state_manager.save_state(workflow_id, state)
-    #         return results
-    #     except Exception as e:
-    #         error_state = {"status": "failed", "error": str(e)}
-    #         self.state_manager.save_state(workflow_id, error_state)
-    #         return {"error": str(e)}
-
     def execute_workflow(self, workflow_id: str) -> Dict:
         """Execute a workflow by ID."""
         try:
@@ -207,8 +126,6 @@ class WorkflowBuilder:
             error_state = {"status": "failed", "error": str(e)}
             self.state_manager.save_state(workflow_id, error_state)
             return {"error": str(e)}
-
-
 
     def stop_workflow(self, workflow_id: str) -> bool:
         """Stop a running workflow."""

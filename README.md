@@ -47,6 +47,20 @@ A powerful workflow orchestration framework for LLM applications with built-in R
   - MinIO
   - Local storage
 
+### Tracking & Monitoring
+- **Dual Tracking Systems**
+  - Built-in basic tracking for essential monitoring
+  - Advanced tracking via ReasonTrack integration
+- **Observability**
+  - Real-time event streaming
+  - Metrics collection
+  - Alert management
+  - Distributed tracing
+- **Storage Options**
+  - Local JSON storage (Basic)
+  - Distributed backends (Advanced)
+  - Multi-tenant support
+
 ## Installation
 
 ### Basic Installation (CPU)
@@ -181,3 +195,5 @@ MIT License - see [LICENSE](LICENSE) for details.
 - Documentation: [docs.reasonflow.ai](https://docs.reasonflow.ai)
 - Issues: [GitHub Issues](https://github.com/yourusername/reasonflow/issues)
 - Discord: [Join our community](https://discord.gg/reasonflow)
+
+For detailed tracking documentation, see [Tracking Guide](docs/tracking.md)
